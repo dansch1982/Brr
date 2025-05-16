@@ -3,32 +3,17 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - gh-pages  # Trigger when gh-pages branch is updated
+      - gh-pages
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    
     steps:
-      - name: Checkout gh-pages
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          ref: gh-pages
-          
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-        
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-          
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4 
+          branch: gh-pages
+          folder: . 
