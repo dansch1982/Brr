@@ -29,7 +29,9 @@ npm run dev
 
 - Use arrow keys to move your character
 - The character automatically shoots in the opposite direction of movement
-- Collect green power-ups to increase fire rate temporarily
+- Collect purple K power-ups to increase fire rate temporarily
+- Press P to pause the game
+- Click MUTE button in top-right corner to toggle sound
 - Avoid red enemies
 - Try to survive as long as possible!
 

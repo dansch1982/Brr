@@ -171,6 +171,16 @@ const InfoText = styled.div`
   }
 `;
 
+const KeyboardKey = styled.span`
+  font-family: monospace;
+  background: rgba(128, 0, 128, 0.3);
+  padding: 2px 6px;
+  border: 1px solid #800080;
+  border-radius: 4px;
+  margin: 0 1px;
+  box-shadow: 0 0 5px rgba(128, 0, 128, 0.5);
+`;
+
 const LandingScreen = ({ onStartGame, highscores }) => {
   const [showHighScores, setShowHighScores] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -199,12 +209,13 @@ const LandingScreen = ({ onStartGame, highscores }) => {
             <HighscoreTitle>How to Play</HighscoreTitle>
             <InfoText>
               🎮 Controls:<br />
-              ↑↓←→ Arrow Keys to Move<br />
-              P to Pause<br /><br />
+              <KeyboardKey>←</KeyboardKey> <KeyboardKey>→</KeyboardKey> <KeyboardKey>↑</KeyboardKey> <KeyboardKey>↓</KeyboardKey> Arrow Keys to Move<br />
+              <KeyboardKey>P</KeyboardKey> to Pause<br />
+              MUTE button in top-right corner<br /><br />
               
               🎯 Gameplay:<br />
               • Auto-shooting in direction of movement<br />
-              • Collect green powerups for increased fire rate and explosion radius<br />
+              • Collect purple K powerups for increased fire rate and explosion radius<br />
               • Chain explosions to clear groups of enemies<br />
               • Survive as long as possible!<br /><br />
               

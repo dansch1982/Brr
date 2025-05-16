@@ -16,7 +16,11 @@ const GameWrapper = styled.div`
   align-items: center;
   background-color: #0f0f1a;
   overflow: hidden;
-  padding: 20px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 `;
 
 const GameContainer = styled.div`
@@ -30,6 +34,7 @@ const GameContainer = styled.div`
   background-color: #1a1a2e;
   overflow: hidden;
   border: 4px solid #800080;
+  border-radius: 12px;
   box-shadow: 
     0 0 10px #800080,
     inset 0 0 20px #800080;
@@ -50,6 +55,7 @@ const GameContainer = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
+    border-radius: 8px;
     background-image: 
       linear-gradient(rgba(255, 215, 0, 0.03) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255, 215, 0, 0.03) 1px, transparent 1px);
@@ -82,6 +88,28 @@ const StatsOverlay = styled.div`
   font-family: 'Press Start 2P', cursive;
   font-size: 1.2rem;
   z-index: 100;
+`;
+
+const MuteButton = styled.button`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid #800080;
+  padding: 8px 16px;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 5px #800080;
+  color: #ffd700;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.8rem;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.7);
+    box-shadow: 0 0 10px #800080;
+    border-color: #ffd700;
+  }
 `;
 
 const PauseOverlay = styled.div`
@@ -171,6 +199,7 @@ const Game = ({ onGameOver }) => {
   const [isGameOver, setIsGameOver] = useState(false);
   const [fireRate, setFireRate] = useState(BASE_FIRE_RATE);
   const [explosionRadius, setExplosionRadius] = useState(BASE_EXPLOSION_RADIUS);
+  const [isPoweredUp, setIsPoweredUp] = useState(false);
   const lastFireRef = useRef(0);
   const [explosions, setExplosions] = useState([]);
   const [currentSpawnInterval, setCurrentSpawnInterval] = useState(INITIAL_ENEMY_SPAWN_INTERVAL);
@@ -178,6 +207,7 @@ const Game = ({ onGameOver }) => {
   const [gameSize, setGameSize] = useState({ width: 0, height: 0 });
   const gameContainerRef = useRef(null);
   const backgroundMusicRef = useRef(null);
+  const [isMuted, setIsMuted] = useState(false);
 
   // Initialize background music
   useEffect(() => {
@@ -185,6 +215,7 @@ const Game = ({ onGameOver }) => {
       src: [brrMusic],
       loop: true,
       volume: 0.5,
+      mute: isMuted
     });
 
     return () => {
@@ -240,11 +271,15 @@ const Game = ({ onGameOver }) => {
   // Update player position constraints
   const constrainPlayerPosition = useCallback((position) => {
     const padding = 20; // Padding from game container edges
+    const containerRect = gameContainerRef.current?.getBoundingClientRect();
+    
+    if (!containerRect) return position;
+
     return {
-      x: Math.min(Math.max(padding, position.x), gameSize.width - padding),
-      y: Math.min(Math.max(padding, position.y), gameSize.height - padding)
+      x: Math.min(Math.max(padding, position.x), containerRect.width - padding),
+      y: Math.min(Math.max(padding, position.y), containerRect.height - padding)
     };
-  }, [gameSize]);
+  }, []);
 
   // Modify handleMovement to use constrained position
   const handleMovement = useCallback((keys) => {
@@ -290,27 +325,31 @@ const Game = ({ onGameOver }) => {
 
   const spawnEnemy = useCallback(() => {
     const side = Math.floor(Math.random() * 4);
+    const containerRect = gameContainerRef.current?.getBoundingClientRect();
+    
+    if (!containerRect) return;
     
     const createEnemy = () => {
       let x, y;
       let offsetRange = 150;
+      const { width, height } = containerRect;
 
       switch (side) {
         case 0: // top
-          x = Math.random() * gameSize.width;
+          x = Math.random() * width;
           y = -20;
           break;
         case 1: // right
-          x = gameSize.width + 20;
-          y = Math.random() * gameSize.height;
+          x = width + 20;
+          y = Math.random() * height;
           break;
         case 2: // bottom
-          x = Math.random() * gameSize.width;
-          y = gameSize.height + 20;
+          x = Math.random() * width;
+          y = height + 20;
           break;
         case 3: // left
           x = -20;
-          y = Math.random() * gameSize.height;
+          y = Math.random() * height;
           break;
       }
 
@@ -323,16 +362,20 @@ const Game = ({ onGameOver }) => {
     const enemiesToSpawn = calculateEnemyCount(gameTime);
     const newEnemies = Array(enemiesToSpawn).fill(null).map(() => createEnemy());
     setEnemies(prev => [...prev, ...newEnemies]);
-  }, [gameTime, gameSize]);
+  }, [gameTime]);
 
   const spawnPowerup = useCallback(() => {
+    const containerRect = gameContainerRef.current?.getBoundingClientRect();
+    
+    if (!containerRect) return;
+    
     const padding = 40;
-    const x = Math.random() * (gameSize.width - 2 * padding) + padding;
-    const y = Math.random() * (gameSize.height - 2 * padding) + padding;
+    const x = Math.random() * (containerRect.width - 2 * padding) + padding;
+    const y = Math.random() * (containerRect.height - 2 * padding) + padding;
     const spawnTime = Date.now();
 
     setPowerups(prev => [...prev, { x, y, id: Date.now(), spawnTime }]);
-  }, [gameSize]);
+  }, []);
 
   useEffect(() => {
     const keys = {
@@ -548,6 +591,8 @@ const Game = ({ onGameOver }) => {
           const distance = Math.sqrt(dx * dx + dy * dy);
           
           if (distance < 30) {
+            // Set powered up state
+            setIsPoweredUp(true);
             // Increase fire rate
             setFireRate(r => r * POWERUP_FIRE_RATE_MULTIPLIER);
             // Increase explosion radius
@@ -556,6 +601,7 @@ const Game = ({ onGameOver }) => {
             
             // Reset after duration
             setTimeout(() => {
+              setIsPoweredUp(false);
               setFireRate(r => r / POWERUP_FIRE_RATE_MULTIPLIER);
               setExplosionRadius(BASE_EXPLOSION_RADIUS);
             }, POWERUP_DURATION);
@@ -574,6 +620,17 @@ const Game = ({ onGameOver }) => {
     const gameLoop = setInterval(updateGame, 16);
     return () => clearInterval(gameLoop);
   }, [playerPosition, enemies, playerDirection, fireBullet, bullets, isGameOver, isPaused, gameSize]);
+
+  // Handle mute toggle
+  const handleMuteToggle = useCallback(() => {
+    setIsMuted(prev => {
+      const newMuted = !prev;
+      if (backgroundMusicRef.current) {
+        backgroundMusicRef.current.mute(newMuted);
+      }
+      return newMuted;
+    });
+  }, []);
 
   if (isGameOver) {
     return (
@@ -600,7 +657,15 @@ const Game = ({ onGameOver }) => {
           Kills: {kills}<br />
           Powerups: {powerupsCollected}
         </StatsOverlay>
-        <Player x={playerPosition.x} y={playerPosition.y} direction={playerDirection} />
+        <MuteButton onClick={handleMuteToggle}>
+          {isMuted ? 'UNMUTE' : 'MUTE'}
+        </MuteButton>
+        <Player 
+          x={playerPosition.x} 
+          y={playerPosition.y} 
+          direction={playerDirection}
+          isPoweredUp={isPoweredUp}
+        />
         {enemies.map(enemy => (
           <Enemy key={enemy.id} x={enemy.x} y={enemy.y} />
         ))}
