@@ -160,6 +160,13 @@ const POWERUP_EXPLOSION_RADIUS = 75; // New larger explosion radius when powered
 const BULLET_SPEED = 5;
 const MAX_BULLETS = 50;
 
+// Unique ID generator
+let lastId = 0;
+const generateUniqueId = () => {
+  lastId++;
+  return `${Date.now()}-${lastId}`;
+};
+
 // Calculate dynamic spawn interval based on game time
 const calculateSpawnInterval = (gameTime) => {
   if (gameTime < ENEMY_SCALING_START_TIME) return INITIAL_ENEMY_SPAWN_INTERVAL;
@@ -356,7 +363,7 @@ const Game = ({ onGameOver }) => {
       x += (Math.random() - 0.5) * offsetRange;
       y += (Math.random() - 0.5) * offsetRange;
 
-      return { x, y, id: Date.now() + Math.random() };
+      return { x, y, id: generateUniqueId() };
     };
 
     const enemiesToSpawn = calculateEnemyCount(gameTime);
@@ -372,9 +379,8 @@ const Game = ({ onGameOver }) => {
     const padding = 40;
     const x = Math.random() * (containerRect.width - 2 * padding) + padding;
     const y = Math.random() * (containerRect.height - 2 * padding) + padding;
-    const spawnTime = Date.now();
 
-    setPowerups(prev => [...prev, { x, y, id: Date.now(), spawnTime }]);
+    setPowerups(prev => [...prev, { x, y, id: generateUniqueId(), spawnTime: Date.now() }]);
   }, []);
 
   useEffect(() => {
@@ -489,7 +495,7 @@ const Game = ({ onGameOver }) => {
       y: playerPosition.y,
       dx: bulletDirection.x * BULLET_SPEED,
       dy: bulletDirection.y * BULLET_SPEED,
-      id: Date.now(),
+      id: generateUniqueId(),
       createdAt: now
     };
 
@@ -557,7 +563,7 @@ const Game = ({ onGameOver }) => {
               setExplosions(prev => [...prev, {
                 x: enemy.x,
                 y: enemy.y,
-                id: Date.now() + Math.random(),
+                id: generateUniqueId(),
                 createdAt: Date.now()
               }]);
               return false;
@@ -567,7 +573,7 @@ const Game = ({ onGameOver }) => {
 
         // Update explosions with timing
         setExplosions(prev => prev.filter(explosion => {
-          const age = Date.now() - explosion.id;
+          const age = Date.now() - explosion.createdAt;
           return age < 500; // Explosion duration
         }));
 
