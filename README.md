@@ -49,3 +49,7 @@ To add background music:
 - Styled Components
 - Howler.js (for audio)
 - Vite
+
+## Play Now
+
+Visit https://dansch1982.github.io/Brr/ to play the game!
